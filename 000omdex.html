@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <title>教師填報系統</title>
+  <style>
+    body {
+      font-family: "Microsoft JhengHei", sans-serif;
+      background: linear-gradient(135deg, #fff0f6, #f8f9fa);
+      text-align: center;
+      padding: 30px;
+    }
+    h2 {
+      font-size: 32px;
+      color: #ff4d6d;
+      margin-bottom: 20px;
+    }
+    h3 {
+      font-size: 24px;
+      color: #ff6f61;
+      margin-bottom: 15px;
+    }
+    .container { 
+      margin: 20px auto; 
+      max-width: 600px; 
+    }
+    button {
+      display: block;
+      width: 100%;
+      padding: 14px;
+      margin: 10px 0;
+      border: none;
+      border-radius: 16px;
+      background: #ffb6c1;
+      color: #333;
+      font-size: 18px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: transform 0.2s, background 0.3s;
+    }
+    button:hover {
+      background: #ff8fa3;
+      transform: scale(1.03);
+    }
+    .back-btn {
+      background: #ffe066;
+      margin-top: 15px;
+    }
+    .back-btn:hover {
+      background: #ffd43b;
+    }
+    .home-btn {
+      background: #74c0fc;
+      margin-top: 10px;
+    }
+    .home-btn:hover {
+      background: #4dabf7;
+    }
+    iframe {
+      width: 90%;
+      height: 85vh; /* 高一點但不是全滿 */
+      border: none;
+      margin: 20px auto;
+      display: block;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      background: #fff;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>🌸 教師填報系統 🌸</h2>
+  <div id="app" class="container"></div>
+
+  <script>
+    const data = {
+      "國文科": ["陳淑君", "林頤", "韋琪", "莊惠雯", "黃嘉玲"],
+      "英文科": ["吳怡慧", "劉佩芝", "周暉健", "曹瑋勻", "陳巧玲"],
+      "數學科": ["蔡明佑", "余姍妮", "謝忠志"],
+      "養殖科": ["陶申秋"],
+      "輪機科": ["王國忠", "劉韋志", "邱千瑋", "陳維政", "陳柔羽"],
+      "機電/船機科": ["吳昭彬", "張志豪", "林衣衽"],
+      "電子科": ["趙景松", "吳明順"],
+      "食品科(水食/烘焙)": ["謝佩蓉", "方郁婷", "陳慧如", "游軒銘", "羅永福"],
+      "體育科": ["嚴淑娟", "吳俊賢"]
+    };
+
+    const classes = {
+      "養殖一": ["何O滕", "郭O喆"],
+      "輪機一": ["施O鋒", "錢O綸"],
+      "船機一": ["辛O軒", "林O皇"],
+      "電一甲": ["彭O建"],
+      "水食一": ["李O信", "王O筑", "蔡O妍"],
+      "烘焙一": ["林O成", "張O翔", "吳O涵", "蔡O妤", "蔡O庭"],
+      "體育一": ["黃O祐"]
+    };
+
+    const formBase = "https://docs.google.com/forms/d/e/1FAIpQLSeRfJZfRvAmuCb3jMsinpWX7O-XBSNFvDzJpe86WyXgs3kOuw/viewform?usp=pp_url";
+
+    const subjectIcons = {
+      "國文科": "📘",
+      "英文科": "📝",
+      "數學科": "🔢",
+      "養殖科": "🐟",
+      "輪機科": "⚙️",
+      "機電/船機科": "🔧",
+      "電子科": "💡",
+      "食品科(水食/烘焙)": "🍞",
+      "體育科": "⚽"
+    };
+
+    let historyStack = []; 
+    const app = document.getElementById("app");
+
+    function renderSubjects() {
+      app.innerHTML = "<h3>請選擇科別 ✨</h3>";
+      for (let subject in data) {
+        addButton(`${subjectIcons[subject]} ${subject}`, () => {
+          historyStack.push(renderSubjects);
+          renderTeachers(subject);
+        });
+      }
+    }
+
+    function renderTeachers(subject) {
+      app.innerHTML = `<h3>${subject} → 選擇教師</h3>`;
+      data[subject].forEach(teacher => {
+        addButton(teacher + " 老師", () => {
+          historyStack.push(() => renderTeachers(subject));
+          renderClasses(teacher);
+        });
+      });
+      addBackAndHome();
+    }
+
+    function renderClasses(teacher) {
+      app.innerHTML = `<h3>${teacher} → 選擇班級</h3>`;
+      for (let cls in classes) {
+        addButton(cls, () => {
+          historyStack.push(() => renderClasses(teacher));
+          renderStudents(teacher, cls);
+        });
+      }
+      addBackAndHome();
+    }
+
+    function renderStudents(teacher, cls) {
+      app.innerHTML = `<h3>${cls} → 選擇學生</h3>`;
+      classes[cls].forEach(student => {
+        addButton(student, () => {
+          historyStack.push(() => renderStudents(teacher, cls));
+          renderForm(teacher, cls, student);
+        });
+      });
+      addBackAndHome();
+    }
+
+    function renderForm(teacher, cls, student) {
+      app.innerHTML = `<h3>表單填寫 (${teacher} / ${cls} / ${student})</h3>`;
+      const iframe = document.createElement("iframe");
+      iframe.src = `${formBase}&entry.1717510391=${encodeURIComponent(teacher)}&entry.1776778113=${encodeURIComponent(cls)}&entry.1650835019=${encodeURIComponent(student)}`;
+      app.appendChild(iframe);
+      addBackAndHome();
+    }
+
+    function addButton(label, onClick) {
+      let btn = document.createElement("button");
+      btn.textContent = label;
+      btn.onclick = onClick;
+      app.appendChild(btn);
+    }
+
+    function addBackAndHome() {
+      let backBtn = document.createElement("button");
+      backBtn.textContent = "⬅ 返回上一層";
+      backBtn.className = "back-btn";
+      backBtn.onclick = () => {
+        if (historyStack.length > 0) {
+          let last = historyStack.pop();
+          last();
+        }
+      };
+      app.appendChild(backBtn);
+
+      let homeBtn = document.createElement("button");
+      homeBtn.textContent = "🏠 回首頁";
+      homeBtn.className = "home-btn";
+      homeBtn.onclick = () => {
+        historyStack = [];
+        renderSubjects();
+      };
+      app.appendChild(homeBtn);
+    }
+
+    // 預設顯示
+    renderSubjects();
+  </script>
+</body>
+</html>
